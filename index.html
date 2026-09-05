@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AI60211 · Module 2 · Part 1 — Graph Foundations, Traversal & MST</title>
+<style>
+  :root{
+    --maroon:#7A1E2E; --maroon2:#5C1622; --rose:#E7B9C0; --cream:#F5EFE6;
+    --blue:#35599C; --bluetx:#34568F; --steel:#B0C0D0; --steelbrd:#9DB0C6; --blueonfill:#243F63;
+    --mpanel:#F1E7E9; --mbrd:#E4D7DA; --bluecard:#D5DFEC;
+    --ink:#1F2124; --mute:#6E7075; --line:#E2E2E2; --rowbg:#F7F3F4;
+    --codebg:#F4F4F6; --codebrd:#E4E4E8; --codeink:#24272C;
+    --af:Arial, Helvetica, sans-serif;
+    --cf:Cambria, Georgia, "Times New Roman", serif;
+    --mf:"Courier New", Consolas, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#5b5b5f; font-family:var(--af); padding:26px 0;}
+  .deck{display:flex; flex-direction:column; align-items:center; gap:26px;}
+  .slide{
+    width:1280px; height:720px; background:#fff; position:relative;
+    overflow:hidden; box-shadow:0 4px 22px rgba(0,0,0,.35);
+  }
+  /* ---------- shared content-slide chrome ---------- */
+  .kick{position:absolute; left:58px; top:29px; font-size:15px; font-weight:700;
+        letter-spacing:2.7px; color:var(--maroon); text-transform:uppercase;}
+  .kick.b{color:var(--bluetx);}
+  .title{position:absolute; left:58px; top:63px; width:1164px; font-size:26px;
+         color:var(--ink); text-decoration:underline; text-underline-offset:6px; line-height:1.13;}
+  .foot{position:absolute; left:58px; bottom:20px; font-size:8.5px; color:var(--mute);}
+  .pageno{position:absolute; right:58px; bottom:20px; font-size:9.5px; color:var(--mute);}
+  .body{position:absolute; left:58px; top:156px; width:648px;}
+  .side{position:absolute; left:735px; top:156px; width:487px;}
+  .full{position:absolute; left:58px; top:156px; width:1164px;}
+  /* ---------- bullets ---------- */
+  ul{list-style:none;}
+  li{position:relative; padding-left:17px; margin-bottom:9px; font-size:15px;
+     color:var(--ink); line-height:1.38;}
+  li:before{content:"•"; position:absolute; left:0; color:var(--ink);}
+  li b{font-weight:700;}
+  li.sub{font-size:14px; color:var(--mute); margin-left:18px;}
+  .mini{font-size:13px; font-weight:700; letter-spacing:1px; color:var(--maroon);
+        text-transform:uppercase; margin:10px 0 6px;}
+  .mini.b{color:var(--bluetx);}
+  /* ---------- panel ---------- */
+  .panel{background:var(--mpanel); border:1px solid var(--mbrd); border-radius:7px; padding:17px 20px;}
+  .panel.steel{background:var(--steel); border-color:var(--steelbrd);}
+  .panel h4{font-family:var(--cf); font-size:14.5px; color:var(--maroon); font-weight:700; margin-bottom:8px;}
+  .panel.steel h4{color:var(--blueonfill);}
+  .panel h4:before{content:""; display:inline-block; width:9px; height:9px; border-radius:50%;
+                   background:var(--maroon); margin-right:8px; vertical-align:1px;}
+  .panel.steel h4:before{background:var(--blue);}
+  .panel p{font-size:12.5px; color:var(--ink); line-height:1.5; margin-bottom:8px;}
+  .panel p:last-child{margin-bottom:0;}
+  /* ---------- placement tip ---------- */
+  .tip{border-left:4px solid var(--blue); background:#EAF0F6; padding:11px 14px; border-radius:0 5px 5px 0;}
+  .tip b{color:var(--blue); font-size:11.5px; letter-spacing:1.2px; text-transform:uppercase;}
+  .tip p{font-size:12.5px; color:var(--ink); line-height:1.48; margin-top:4px;}
+  /* ---------- code ---------- */
+  pre{background:var(--codebg); border:1px solid var(--codebrd); border-radius:5px;
+      padding:13px 15px; font-family:var(--mf); font-size:11.5px; color:var(--codeink);
+      line-height:1.45; overflow:hidden; white-space:pre;}
+  pre.sm{font-size:10.5px; line-height:1.4;}
+  .c{color:#7C8894;}      /* comment */
+  .k{color:#7A1E2E; font-weight:700;}  /* keyword */
+  .s{color:#2F6F4F;}      /* string */
+  /* ---------- table ---------- */
+  table{border-collapse:collapse; width:100%; font-size:12px;}
+  th{background:var(--maroon); color:#fff; font-weight:700; text-align:center; padding:7px 9px;
+     border:1px solid var(--line);}
+  th:first-child{text-align:left;}
+  td{padding:6px 9px; border:1px solid var(--line); text-align:center; font-family:var(--mf);}
+  td:first-child{text-align:left; font-family:var(--af); font-weight:700;}
+  tr:nth-child(even) td{background:var(--rowbg);}
+  /* ---------- math ---------- */
+  .eq{background:var(--codebg); border:1px solid var(--codebrd); border-radius:5px;
+      padding:12px 15px; text-align:center; font-size:15px; color:var(--codeink);}
+  math{font-size:16px;}
+  .eqcap{font-size:11px; color:var(--mute); font-style:italic; text-align:center; margin-top:6px;}
+  /* ---------- title slide ---------- */
+  .tslide{background:var(--cream);}
+  .tband{position:absolute; left:0; top:0; width:100%; height:91px; background:var(--maroon);}
+  .tband span{display:block; text-align:center; margin-top:34px; color:var(--rose);
+              font-size:12.5px; font-weight:700; letter-spacing:2.2px;}
+  .tmain{position:absolute; left:0; top:196px; width:100%; text-align:center;}
+  .tmain h1{font-family:var(--cf); font-size:44px; color:var(--maroon); font-weight:700;}
+  .tmain h2{font-family:var(--cf); font-size:23px; color:var(--maroon2); font-style:italic; margin-top:14px;}
+  .trule{width:430px; height:1.6px; background:var(--maroon); margin:22px auto 0;}
+  .tmain p{width:900px; margin:20px auto 0; font-size:14px; color:#5C4B4E; line-height:1.55;}
+  .tfoot{position:absolute; left:0; bottom:78px; width:100%; text-align:center;}
+  .tfoot h3{font-family:var(--cf); font-size:18px; color:var(--ink);}
+  .tfoot .r2{width:240px; height:1.6px; background:var(--maroon); margin:16px auto 10px;}
+  .tfoot h4{font-size:14px; color:var(--maroon); font-weight:700;}
+  /* ---------- divider ---------- */
+  .div{background:var(--maroon); color:#fff;}
+  .div .num{position:absolute; right:40px; top:-70px; font-family:var(--cf); font-size:380px;
+            font-weight:700; color:var(--maroon2); line-height:1;}
+  .div .pt{position:absolute; left:72px; top:222px; font-size:14px; font-weight:700;
+           letter-spacing:3px; color:var(--rose);}
+  .div h2{position:absolute; left:69px; top:258px; width:1000px; font-family:var(--cf);
+          font-size:40px; font-weight:700; color:#fff;}
+  .div p{position:absolute; left:72px; top:398px; width:930px; font-size:15px;
+         color:#F0D9DD; line-height:1.45;}
+  .div .rule{position:absolute; left:75px; top:610px; width:500px; height:1px; background:var(--maroon2);}
+  .div .chips{position:absolute; left:75px; top:620px; font-size:11.5px; color:var(--rose); letter-spacing:1px;}
+  .div .pageno{color:var(--rose);}
+  /* ---------- misc layout ---------- */
+  .cards{display:flex; gap:22px;}
+  .card{flex:1; border:1.2px solid var(--bluecard); border-radius:7px; padding:16px 17px;}
+  .card .cn{display:inline-block; width:27px; height:27px; border-radius:50%; background:var(--blue);
+            color:#fff; text-align:center; line-height:27px; font-size:13.5px; font-weight:700;}
+  .card h4{display:inline-block; font-family:var(--cf); font-size:17px; color:var(--bluetx);
+           font-weight:700; margin-left:10px; vertical-align:4px;}
+  .card p{font-size:12.5px; color:var(--ink); line-height:1.45; margin-top:11px;}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .cap{font-size:11px; color:var(--mute); font-style:italic; text-align:center; margin-top:7px;}
+  svg text{font-family:var(--af);}
+  /* ---------- print / PDF export ---------- */
+  @page{size:1280px 720px; margin:0;}
+  @media print{
+    body{background:#fff; padding:0;}
+    .deck{display:block; gap:0;}
+    .slide{box-shadow:none; margin:0; break-after:page; page-break-after:always;}
+    .slide:last-child{break-after:auto; page-break-after:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ============ 1 · TITLE ============ -->
+<section class="slide tslide">
+  <div class="tband"><span>IIT KHARAGPUR &nbsp;·&nbsp; M.TECH (ARTIFICIAL INTELLIGENCE) &nbsp;·&nbsp; AI60211</span></div>
+  <div class="tmain">
+    <h1>Module 2 · Graph Algorithms &amp; Optimization</h1>
+    <h2>Part 1 — Graph Foundations, Traversal &amp; Minimum Spanning Trees</h2>
+    <div class="trule"></div>
+    <p>An 8-hour advanced module in four parts. Today: the structure itself, how to explore it,
+       and how to connect it at least cost — with the analytical rigour and placement-level depth
+       expected of M.Tech AI candidates.</p>
+  </div>
+  <div class="tfoot">
+    <h3>Indian Institute of Technology, Kharagpur</h3>
+    <div class="r2"></div>
+    <h4>Prof. Amlan Chakrabarti</h4>
+  </div>
+  <div class="pageno">1</div>
+</section>
+
+<!-- ============ 2 · MODULE ARCHITECTURE ============ -->
+<section class="slide">
+  <div class="kick b">Orientation</div>
+  <div class="title">Module architecture: 100 slides, 8 hours, four parts</div>
+  <div class="body">
+    <ul>
+      <li><b>Part 1 — Foundations</b> - graphs, representations, DFS/BFS, minimum spanning trees. <i>Today.</i></li>
+      <li><b>Part 2 — Shortest paths</b> - Dijkstra, Bellman-Ford, Floyd-Warshall, A*; the dynamic-programming bridge to AI.</li>
+      <li><b>Part 3 — Graph optimisation for networks</b> - min-cut/max-flow, gradient descent as a graph problem, backpropagation on computation graphs.</li>
+      <li><b>Part 4 — Spectral methods</b> - the graph Laplacian, eigen-decomposition, spectral clustering, random walks, diffusion, and GNNs.</li>
+    </ul>
+    <div class="tip" style="margin-top:16px;">
+      <b>Placement tip</b>
+      <p>Graph questions dominate the DSA rounds at Google, Amazon and quantitative firms.
+         Roughly 70% reduce to BFS/DFS, union-find, or Dijkstra. Master Part 1 and you have
+         covered the majority of what interviews actually test.</p>
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel steel">
+      <h4>How the parts compound</h4>
+      <p>Everything later is built on today. Dijkstra is Prim with a different key. Max-flow is
+         repeated BFS. Backpropagation is a reverse topological traversal. The Laplacian is the
+         adjacency matrix rearranged.</p>
+      <p>So the traversal and greedy machinery we establish now is not preliminary material —
+         it is the substrate of the entire module.</p>
+      <p><b>Today's budget:</b> ≈30 min foundations, ≈45 min traversal, ≈45 min MST.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">2</div>
+</section>
+
+<!-- ============ 3 · WHY GRAPHS FOR AI ============ -->
+<section class="slide">
+  <div class="kick b">Orientation</div>
+  <div class="title">Why graphs are the native data structure of modern AI</div>
+  <div class="body">
+    <ul>
+      <li><b>Computation graphs</b> - every neural network is a directed acyclic graph of tensor operations; autograd is a graph traversal.</li>
+      <li><b>Graph neural networks</b> - message passing aggregates over neighbourhoods; a k-layer GNN sees exactly the k-hop BFS ball.</li>
+      <li><b>Relational data</b> - molecules, knowledge bases, social and citation networks, recommender bipartite graphs.</li>
+      <li><b>Optimisation</b> - min-cut/max-flow for segmentation and inference in MRFs; shortest paths as dynamic programming.</li>
+      <li><b>Spectral learning</b> - Laplacian eigenvectors give embeddings, clusters and diffusion kernels.</li>
+    </ul>
+  </div>
+  <div class="side">
+    <div class="panel steel">
+      <h4>The thread of this module</h4>
+      <p>We keep surfacing the AI link deliberately: BFS as a GNN's receptive field, DFS's
+         topological order as backpropagation, MST as single-linkage clustering.</p>
+      <p>Today builds the vocabulary and the cost intuition those connections require. Parts 3
+         and 4 then cash them in.</p>
+    </div>
+    <div class="tip" style="margin-top:16px;">
+      <b>Research angle</b>
+      <p>Message-passing GNNs are provably no more expressive than the 1-Weisfeiler-Lehman
+         graph-isomorphism test — a result that motivates higher-order and spectral GNNs in Part 4.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">3</div>
+</section>
+
+<!-- ============ 4 · THREE QUESTIONS ============ -->
+<section class="slide">
+  <div class="kick b">Orientation</div>
+  <div class="title">Three questions we ask of every graph algorithm</div>
+  <div class="full">
+    <div class="cards">
+      <div class="card"><span class="cn">1</span><h4>Correct?</h4>
+        <p>Does an invariant, induction, or exchange argument prove it returns the right structure on every input?</p></div>
+      <div class="card"><span class="cn">2</span><h4>How fast?</h4>
+        <p>Cost in terms of both V and E — and does the answer flip with graph density?</p></div>
+      <div class="card"><span class="cn">3</span><h4>What space?</h4>
+        <p>Auxiliary memory: the frontier, the visited set, the priority queue, the recursion stack.</p></div>
+    </div>
+    <div style="margin-top:24px;" class="two">
+      <div class="panel steel">
+        <h4>The V-and-E habit</h4>
+        <p>Graph costs are written in two variables. A <b>dense</b> graph has E = Θ(V²); a <b>sparse</b>
+           graph has E = Θ(V). "O(V + E)" and "O(E log V)" mean very different things in each regime.</p>
+        <p>Always ask which world you are in before choosing a representation or an algorithm.</p>
+      </div>
+      <div class="eq" style="padding-top:20px;">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <mrow><mn>0</mn><mo>≤</mo><mo>|</mo><mi>E</mi><mo>|</mo><mo>≤</mo>
+          <mfrac><mrow><mo>|</mo><mi>V</mi><mo>|</mo><mo>(</mo><mo>|</mo><mi>V</mi><mo>|</mo><mo>−</mo><mn>1</mn><mo>)</mo></mrow><mn>2</mn></mfrac></mrow>
+        </math>
+        <div class="eqcap">simple undirected graph: the edge bound that defines "dense"</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">4</div>
+</section>
+
+<!-- ============ 5 · DIVIDER 1A ============ -->
+<section class="slide div">
+  <div class="num">1</div>
+  <div class="pt">PART 1 · SECTION A</div>
+  <h2>Graph Foundations &amp; Representations</h2>
+  <p>The formal model, a working taxonomy, and the two data structures on which every later
+     cost in this module depends.</p>
+  <div class="rule"></div>
+  <div class="chips">Definitions &nbsp;&nbsp;&nbsp;&nbsp; Taxonomy &nbsp;&nbsp;&nbsp;&nbsp; Degree &amp; paths &nbsp;&nbsp;&nbsp;&nbsp; Matrix vs list</div>
+  <div class="pageno">5</div>
+</section>
+
+<!-- ============ 6 · FORMAL DEFINITION ============ -->
+<section class="slide">
+  <div class="kick">Graph foundations</div>
+  <div class="title">A graph is a set of vertices and a set of edges</div>
+  <div class="body">
+    <ul>
+      <li><b>Definition</b> - G = (V, E) where V is a finite vertex set and E ⊆ V × V a set of edges. |V| = n, |E| = m.</li>
+      <li><b>Undirected</b> - edges are unordered pairs {u, v}; the adjacency relation is symmetric.</li>
+      <li><b>Directed (digraph)</b> - edges are ordered pairs (u, v); u → v does not imply v → u.</li>
+      <li><b>Weighted</b> - a function w : E → ℝ attaches a cost to each edge.</li>
+      <li><b>Simple graph</b> - no self-loops, no parallel edges. Our default unless stated.</li>
+      <li><b>Incidence &amp; adjacency</b> - edge {u,v} is <i>incident</i> on u and v, which are <i>adjacent</i>.</li>
+    </ul>
+  </div>
+  <div class="side">
+    <svg width="487" height="215" viewBox="0 0 487 215">
+      <line x1="120" y1="45" x2="250" y2="45" stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="120" y1="45" x2="120" y2="150" stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="250" y1="45" x2="330" y2="150" stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="120" y1="150" x2="330" y2="150" stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="250" y1="45" x2="120" y2="150" stroke="#9AA0A6" stroke-width="2"/>
+      <circle cx="120" cy="45" r="21" fill="#F5E6E9" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="250" cy="45" r="21" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="120" cy="150" r="21" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="330" cy="150" r="21" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <text x="120" y="51" text-anchor="middle" font-size="14" font-weight="bold">u</text>
+      <text x="250" y="51" text-anchor="middle" font-size="14" font-weight="bold">v</text>
+      <text x="120" y="156" text-anchor="middle" font-size="14" font-weight="bold">x</text>
+      <text x="330" y="156" text-anchor="middle" font-size="14" font-weight="bold">y</text>
+      <text x="185" y="36" text-anchor="middle" font-size="12" fill="#6E7075">edge {u,v}</text>
+    </svg>
+    <div class="panel" style="margin-top:6px;">
+      <h4>Vocabulary is load-bearing</h4>
+      <p>Every proof today is phrased in vertices, edges, cuts and paths. Sloppiness about
+         ordered vs unordered pairs is the single most common source of errors in directed
+         algorithms later in the module.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">6</div>
+</section>
+
+<!-- ============ 7 · TAXONOMY ============ -->
+<section class="slide">
+  <div class="kick">Graph foundations</div>
+  <div class="title">A working taxonomy: know which graph you are holding</div>
+  <div class="body">
+    <ul>
+      <li><b>Directed vs undirected</b> - whether edges carry orientation.</li>
+      <li><b>Weighted vs unweighted</b> - BFS needs unweighted; Dijkstra needs non-negative weights.</li>
+      <li><b>Connected vs disconnected</b> - else the graph splits into connected components.</li>
+      <li><b>Cyclic vs acyclic</b> - a <b>DAG</b> has no directed cycle: the shape of every computation graph.</li>
+      <li><b>Tree</b> - connected and acyclic; exactly n − 1 edges. The maximally sparse connected graph.</li>
+      <li><b>Bipartite</b> - V splits into two independent sets; models users × items.</li>
+      <li><b>Complete graph / clique</b> - every pair adjacent; K<sub>n</sub> has n(n−1)/2 edges.</li>
+    </ul>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>Classification precedes algorithm choice</h4>
+      <p>An algorithm's correctness assumes a graph class. Topological sort requires a DAG;
+         Dijkstra requires non-negative weights; MST requires a connected weighted undirected
+         graph. Classifying the input silently determines which tools are even legal.</p>
+    </div>
+    <div class="tip" style="margin-top:16px;">
+      <b>Placement tip</b>
+      <p>"Is it a DAG?" and "is it bipartite?" are single-traversal checks (DFS back-edge test;
+         BFS 2-colouring). Interviewers use them to test whether you reach for traversal
+         reflexively rather than inventing machinery.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">7</div>
+</section>
+
+<!-- ============ 8 · DEGREE + HANDSHAKING ============ -->
+<section class="slide">
+  <div class="kick">Graph foundations</div>
+  <div class="title">Degree and the handshaking lemma</div>
+  <div class="body">
+    <ul>
+      <li><b>Degree</b> - deg(v) = number of edges incident on v (undirected).</li>
+      <li><b>In / out degree</b> - for digraphs, incoming and outgoing edges counted separately.</li>
+      <li><b>Average degree</b> - 2|E| / |V|; constant for sparse graphs, Θ(V) for dense ones.</li>
+      <li><b>Corollary</b> - the number of odd-degree vertices is always even.</li>
+    </ul>
+    <div class="eq" style="margin-top:14px;">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mrow><munder><mo>∑</mo><mrow><mi>v</mi><mo>∈</mo><mi>V</mi></mrow></munder>
+        <mi>deg</mi><mo>(</mo><mi>v</mi><mo>)</mo><mo>=</mo><mn>2</mn><mo>|</mo><mi>E</mi><mo>|</mo></mrow>
+      </math>
+      <div class="eqcap">Handshaking lemma</div>
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>Proof (double counting)</h4>
+      <p>Count the set of incidence pairs (v, e) with v an endpoint of e, in two ways.</p>
+      <p>Summing over vertices gives Σ deg(v). Summing over edges gives 2|E|, because each edge
+         has exactly two endpoints. The two counts enumerate the same finite set, hence they
+         are equal. ∎</p>
+      <p>The corollary follows because 2|E| is even, so the odd-degree terms must pair up.</p>
+    </div>
+    <div class="tip" style="margin-top:14px;">
+      <b>Why it matters</b>
+      <p>This is the prototype of the counting arguments used throughout graph theory, and it
+         is what bounds adjacency-list traversal: Σ deg(v) = 2|E| is exactly why scanning all
+         adjacency lists costs Θ(V + E), not Θ(V·E).</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">8</div>
+</section>
+
+<!-- ============ 9 · PATHS / CYCLES / CONNECTIVITY ============ -->
+<section class="slide">
+  <div class="kick">Graph foundations</div>
+  <div class="title">Paths, cycles, connectivity and components</div>
+  <div class="body">
+    <ul>
+      <li><b>Walk</b> - any alternating sequence of vertices and edges.</li>
+      <li><b>Path</b> - a walk with no repeated vertex (a <i>simple</i> path).</li>
+      <li><b>Cycle</b> - a closed walk; a simple cycle repeats only its endpoint.</li>
+      <li><b>Connected</b> - a path exists between every pair of vertices.</li>
+      <li><b>Connected component</b> - a maximal connected subgraph. Traversal from v discovers exactly v's component.</li>
+      <li><b>Strongly connected</b> - in a digraph, directed paths exist both ways for every pair.</li>
+      <li><b>Distance d(u,v)</b> - the least number of edges on a u–v path; ∞ if unreachable.</li>
+    </ul>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>These are what algorithms return</h4>
+      <p>BFS and DFS are machines for discovering paths, cycles and components. Naming them
+         precisely lets us state exactly what each traversal guarantees — and what it does not.</p>
+      <p>Note that d(u,v) is defined by <i>edge count</i>. Once edges carry weights the definition
+         changes and BFS is no longer correct; that is Dijkstra's territory in Part 2.</p>
+    </div>
+    <div class="tip" style="margin-top:16px;">
+      <b>Common confusion</b>
+      <p>Walk ⊃ trail (no repeated edge) ⊃ path (no repeated vertex). Cycle-detection proofs
+         break if you conflate them. State which object you mean.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">9</div>
+</section>
+
+<!-- ============ 10 · REPRESENTATIONS ============ -->
+<section class="slide">
+  <div class="kick">Graph foundations</div>
+  <div class="title">Adjacency matrix vs adjacency list: the governing trade-off</div>
+  <div class="body">
+    <table>
+      <tr><th>Operation</th><th>Adjacency matrix</th><th>Adjacency list</th></tr>
+      <tr><td>Space</td><td>Θ(V²)</td><td>Θ(V + E)</td></tr>
+      <tr><td>Edge query (u,v)?</td><td>O(1)</td><td>O(deg u)</td></tr>
+      <tr><td>Enumerate neighbours</td><td>O(V)</td><td>O(deg u)</td></tr>
+      <tr><td>Add edge</td><td>O(1)</td><td>O(1)</td></tr>
+      <tr><td>Delete edge</td><td>O(1)</td><td>O(deg u)</td></tr>
+      <tr><td>Iterate all edges</td><td>Θ(V²)</td><td>Θ(V + E)</td></tr>
+    </table>
+    <div class="tip" style="margin-top:15px;">
+      <b>Placement tip</b>
+      <p>State your representation before you state your complexity. "BFS is O(V+E)" is only
+         true on an adjacency list — on a matrix it is Θ(V²). Interviewers listen for this.</p>
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>Which to choose</h4>
+      <p><b>Sparse (E ≈ V)</b> — the common case in AI, social and road networks — favours the
+         <b>list</b>: linear space and neighbour scans proportional to degree.</p>
+      <p><b>Dense (E ≈ V²)</b>, or workloads dominated by "is there an edge?" queries, favours the
+         <b>matrix</b>: O(1) lookup, contiguous memory, and direct compatibility with BLAS/GPU
+         kernels.</p>
+      <p>The matrix view is also what makes Part 4 possible: the Laplacian L = D − A is a matrix,
+         so spectral graph theory necessarily lives in this representation.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">10</div>
+</section>
+
+<!-- ============ 11 · PYTHON REPRESENTATION ============ -->
+<section class="slide">
+  <div class="kick">Graph foundations</div>
+  <div class="title">Representing a graph in Python</div>
+  <div class="body">
+    <ul>
+      <li><b>Adjacency list</b> - a <span style="font-family:var(--mf)">defaultdict(list)</span> of (neighbour, weight) tuples; Pythonic and sparse-optimal.</li>
+      <li><b>One flag</b> - the second append is the only difference between directed and undirected.</li>
+      <li><b>Matrix</b> - a NumPy array when you need O(1) edge tests or linear algebra.</li>
+      <li><b>Memory</b> - lists hold ~Θ(V+E) references; the matrix commits Θ(V²) regardless of E.</li>
+    </ul>
+    <div class="tip" style="margin-top:14px;">
+      <b>Engineering note</b>
+      <p>For graphs beyond ~10⁶ edges prefer a CSR (compressed sparse row) layout —
+         <span style="font-family:var(--mf)">scipy.sparse.csr_matrix</span> — which gives
+         adjacency-list asymptotics with matrix-grade cache locality. This is what DGL and
+         PyTorch Geometric use internally.</p>
+    </div>
+  </div>
+  <div class="side">
+    <pre><span class="k">from</span> collections <span class="k">import</span> defaultdict
+
+<span class="k">class</span> Graph:
+    <span class="s">"""Undirected weighted graph, adjacency list."""</span>
+    <span class="k">def</span> __init__(self, directed=<span class="k">False</span>):
+        self.adj = defaultdict(list)   <span class="c"># v -> [(nbr, w)]</span>
+        self.directed = directed
+
+    <span class="k">def</span> add_edge(self, u, v, w=1):
+        self.adj[u].append((v, w))
+        <span class="k">if not</span> self.directed:
+            self.adj[v].append((u, w))  <span class="c"># O(1) amortised</span>
+
+    <span class="k">def</span> neighbours(self, u):
+        <span class="k">return</span> self.adj[u]          <span class="c"># O(deg u)</span>
+
+    <span class="k">def</span> __len__(self):
+        <span class="k">return</span> len(self.adj)
+
+<span class="c"># dense / spectral view:</span>
+<span class="c"># import numpy as np</span>
+<span class="c"># A = np.zeros((n, n)); A[u, v] = A[v, u] = w</span>
+<span class="c"># L = np.diag(A.sum(1)) - A      # Laplacian (Part 4)</span></pre>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">11</div>
+</section>
+
+<!-- ============ 12 · DIVIDER 1B ============ -->
+<section class="slide div">
+  <div class="num">2</div>
+  <div class="pt">PART 1 · SECTION B</div>
+  <h2>Graph Traversal: BFS &amp; DFS</h2>
+  <p>Two disciplined ways to visit every vertex exactly once — and the foundation of almost
+     every graph algorithm in the remaining three parts.</p>
+  <div class="rule"></div>
+  <div class="chips">Generic template &nbsp;&nbsp;&nbsp;&nbsp; BFS &nbsp;&nbsp;&nbsp;&nbsp; DFS &nbsp;&nbsp;&nbsp;&nbsp; Edge classes &nbsp;&nbsp;&nbsp;&nbsp; Applications</div>
+  <div class="pageno">12</div>
+</section>
+
+<!-- ============ 13 · GENERIC TEMPLATE ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">One template, two behaviours</div>
+  <div class="body">
+    <ul>
+      <li><b>Goal</b> - systematically visit every vertex reachable from a source, exactly once.</li>
+      <li><b>Two ingredients</b> - a <i>visited</i> set, and a <i>frontier</i> of discovered-but-unexplored vertices.</li>
+      <li><b>The only difference</b> - BFS's frontier is a FIFO queue; DFS's is a LIFO stack (explicit or the call stack).</li>
+      <li><b>Why visited is mandatory</b> - graphs contain cycles; without marking, traversal never terminates. Trees needed no such set.</li>
+      <li><b>Cost</b> - each vertex dequeued once, each adjacency list scanned once ⇒ Θ(V + E).</li>
+    </ul>
+    <div class="eq" style="margin-top:12px;">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mrow><mi>T</mi><mo>(</mo><mi>n</mi><mo>)</mo><mo>=</mo>
+        <munder><mo>∑</mo><mrow><mi>v</mi><mo>∈</mo><mi>V</mi></mrow></munder>
+        <mrow><mo>(</mo><mn>1</mn><mo>+</mo><mi>deg</mi><mo>(</mo><mi>v</mi><mo>)</mo><mo>)</mo></mrow>
+        <mo>=</mo><mi>V</mi><mo>+</mo><mn>2</mn><mi>E</mi><mo>=</mo><mi>Θ</mi><mo>(</mo><mi>V</mi><mo>+</mo><mi>E</mi><mo>)</mo></mrow>
+      </math>
+      <div class="eqcap">the handshaking lemma is what collapses the sum</div>
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>The unification worth remembering</h4>
+      <p>BFS and DFS are <i>the same algorithm</i> with different frontier data structures. Swap the
+         queue for a stack and breadth becomes depth.</p>
+      <p>This mirrors the stack/queue duality seen in tree traversal: level-order is BFS,
+         pre-order is DFS. Graphs simply add the visited set.</p>
+    </div>
+    <div class="tip" style="margin-top:16px;">
+      <b>Placement tip</b>
+      <p>If you can write one generic <span style="font-family:var(--mf)">explore(frontier)</span>
+         and instantiate both, you demonstrate structural understanding rather than memorised
+         code. Interviewers reward that framing.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">13</div>
+</section>
+
+<!-- ============ 14 · BFS + PROOF ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">BFS explores in layers — and provably finds shortest paths</div>
+  <div class="body">
+    <ul>
+      <li><b>Strategy</b> - visit the source, then all neighbours, then their neighbours: a wavefront.</li>
+      <li><b>Theorem</b> - for unit-weight graphs BFS sets dist[v] = d(s, v) for every reachable v.</li>
+      <li><b>Queue invariant</b> - the queue holds vertices of at most two consecutive distances, in non-decreasing order.</li>
+      <li><b>Also yields</b> - a BFS tree, connected components, and a bipartiteness test by level parity.</li>
+    </ul>
+    <div class="eq" style="margin-top:12px;">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mrow><mi>d</mi><mo>(</mo><mi>s</mi><mo>,</mo><mi>v</mi><mo>)</mo><mo>=</mo>
+        <munder><mo>min</mo><mrow><mi>u</mi><mo>∈</mo><mi>N</mi><mo>(</mo><mi>v</mi><mo>)</mo></mrow></munder>
+        <mrow><mo>{</mo><mi>d</mi><mo>(</mo><mi>s</mi><mo>,</mo><mi>u</mi><mo>)</mo><mo>+</mo><mn>1</mn><mo>}</mo></mrow></mrow>
+      </math>
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>Proof by induction on k = d(s,v)</h4>
+      <p><b>Base.</b> dist[s] = 0 = d(s,s).</p>
+      <p><b>Step.</b> Assume every vertex at distance ≤ k is dequeued with a correct label before any
+         vertex at distance k+1. Let d(s,v) = k+1. Some neighbour u has d(s,u) = k, so when u is
+         dequeued v is either already labelled (with ≤ k+1) or is labelled k+1 then. It cannot be
+         labelled less than k+1, else a shorter path would exist. Hence dist[v] = k+1. ∎</p>
+    </div>
+    <div class="tip" style="margin-top:14px;">
+      <b>Where it fails</b>
+      <p>With weights, a two-hop cheap path can beat a one-hop expensive edge. BFS's layer
+         argument collapses — the fix is a priority queue, i.e. Dijkstra (Part 2).</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">14</div>
+</section>
+
+<!-- ============ 15 · BFS PYTHON ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">BFS in Python, and its complexity</div>
+  <div class="body">
+    <ul>
+      <li><b>deque</b> - O(1) <span style="font-family:var(--mf)">append</span> and <span style="font-family:var(--mf)">popleft</span>; a Python list's <span style="font-family:var(--mf)">pop(0)</span> is O(n) and would make BFS O(V²).</li>
+      <li><b>Mark on enqueue</b> - not on dequeue. Marking late lets a vertex enter the queue many times and destroys the linear bound.</li>
+      <li><b>Parent map</b> - reconstructs the actual shortest path, not just its length.</li>
+      <li><b>Time</b> - Θ(V + E). <b>Space</b> - O(V) for queue, dist and parent.</li>
+    </ul>
+    <div class="tip" style="margin-top:14px;">
+      <b>Placement tip</b>
+      <p>Multi-source BFS: seed the queue with <i>all</i> sources at distance 0. Solves "nearest
+         exit / rotting oranges / 0-1 matrix" problems in one pass instead of |S| passes.</p>
+    </div>
+  </div>
+  <div class="side">
+    <pre><span class="k">from</span> collections <span class="k">import</span> deque
+
+<span class="k">def</span> bfs(g, src):
+    <span class="s">"""Unit-weight shortest paths. Theta(V + E)."""</span>
+    dist   = {src: 0}
+    parent = {src: <span class="k">None</span>}
+    q = deque([src])
+
+    <span class="k">while</span> q:
+        u = q.popleft()                <span class="c"># FIFO -> layers</span>
+        <span class="k">for</span> v, _ <span class="k">in</span> g.neighbours(u):
+            <span class="k">if</span> v <span class="k">not in</span> dist:        <span class="c"># first sighting</span>
+                dist[v]   = dist[u] + 1
+                parent[v] = u
+                q.append(v)            <span class="c"># mark on ENQUEUE</span>
+    <span class="k">return</span> dist, parent
+
+<span class="k">def</span> path(parent, v):
+    <span class="s">"""Reconstruct s -> v in O(len(path))."""</span>
+    out = []
+    <span class="k">while</span> v <span class="k">is not</span> <span class="k">None</span>:
+        out.append(v); v = parent[v]
+    <span class="k">return</span> out[::-1]</pre>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">15</div>
+</section>
+
+<!-- ============ 16 · BFS WORKED EXAMPLE ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">Worked example: BFS layers from a source</div>
+  <div class="body">
+    <svg width="640" height="250" viewBox="0 0 640 250">
+      <line x1="70"  y1="125" x2="210" y2="60"  stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="70"  y1="125" x2="210" y2="190" stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="210" y1="60"  x2="360" y2="60"  stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="210" y1="190" x2="360" y2="190" stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="360" y1="60"  x2="500" y2="125" stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="360" y1="190" x2="500" y2="125" stroke="#9AA0A6" stroke-width="2"/>
+      <line x1="210" y1="60"  x2="210" y2="190" stroke="#9AA0A6" stroke-width="2"/>
+      <circle cx="70"  cy="125" r="25" fill="#F5E6E9" stroke="#7A1E2E" stroke-width="2.2"/>
+      <circle cx="210" cy="60"  r="25" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="210" cy="190" r="25" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="360" cy="60"  r="25" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="360" cy="190" r="25" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="500" cy="125" r="25" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <text x="70"  y="131" text-anchor="middle" font-size="13" font-weight="bold">s·0</text>
+      <text x="210" y="66"  text-anchor="middle" font-size="13" font-weight="bold">a·1</text>
+      <text x="210" y="196" text-anchor="middle" font-size="13" font-weight="bold">b·1</text>
+      <text x="360" y="66"  text-anchor="middle" font-size="13" font-weight="bold">c·2</text>
+      <text x="360" y="196" text-anchor="middle" font-size="13" font-weight="bold">d·2</text>
+      <text x="500" y="131" text-anchor="middle" font-size="13" font-weight="bold">e·3</text>
+      <text x="70"  y="230" text-anchor="middle" font-size="11" fill="#6E7075">L0</text>
+      <text x="210" y="230" text-anchor="middle" font-size="11" fill="#6E7075">L1</text>
+      <text x="360" y="230" text-anchor="middle" font-size="11" fill="#6E7075">L2</text>
+      <text x="500" y="230" text-anchor="middle" font-size="11" fill="#6E7075">L3</text>
+    </svg>
+    <div class="cap">label = vertex · BFS distance. Note a–b is a <i>cross edge</i> within a layer — it never shortens a distance.</div>
+  </div>
+  <div class="side">
+    <table>
+      <tr><th>Step</th><th>Dequeued</th><th>Queue after</th></tr>
+      <tr><td>1</td><td>s</td><td>a, b</td></tr>
+      <tr><td>2</td><td>a</td><td>b, c</td></tr>
+      <tr><td>3</td><td>b</td><td>c, d</td></tr>
+      <tr><td>4</td><td>c</td><td>d, e</td></tr>
+      <tr><td>5</td><td>d</td><td>e</td></tr>
+      <tr><td>6</td><td>e</td><td>∅</td></tr>
+    </table>
+    <div class="panel" style="margin-top:16px;">
+      <h4>Read the invariant</h4>
+      <p>At every step the queue holds only distances k and k+1, and never decreases. That is the
+         monotonicity the correctness proof relies on.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">16</div>
+</section>
+
+<!-- ============ 17 · DFS ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">DFS dives deep, backtracks, and timestamps everything</div>
+  <div class="body">
+    <ul>
+      <li><b>Strategy</b> - from v, recurse into an unvisited neighbour before considering the rest; back up when stuck.</li>
+      <li><b>Timestamps</b> - d[v] when first discovered, f[v] when its subtree finishes.</li>
+      <li><b>Parenthesis theorem</b> - the intervals (d[u], f[u]) and (d[v], f[v]) are either disjoint or properly nested; nesting ⟺ ancestry in the DFS forest.</li>
+      <li><b>White-path theorem</b> - v is a descendant of u iff, at time d[u], there is a path u ⇝ v of entirely undiscovered vertices.</li>
+      <li><b>Cost</b> - Θ(V + E) time, O(V) stack depth.</li>
+    </ul>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>Depth reveals what breadth cannot</h4>
+      <p>DFS gives no distance guarantee, but its finish-time ordering exposes cycles,
+         topological order and strongly connected components — structural facts that layered
+         BFS is blind to.</p>
+      <p>The reverse of DFS finish order <i>is</i> a topological sort, which is precisely how a
+         computation graph is evaluated and differentiated.</p>
+    </div>
+    <div class="eq" style="margin-top:14px; text-align:left; font-size:13px;">
+      d[u] &lt; d[v] &lt; f[v] &lt; f[u] &nbsp; ⟺ &nbsp; v is a descendant of u
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">17</div>
+</section>
+
+<!-- ============ 18 · DFS PYTHON ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">DFS in Python: recursive and iterative</div>
+  <div class="body">
+    <ul>
+      <li><b>Recursive</b> - reads like the definition, but CPython's ~1000-frame limit overflows on deep graphs.</li>
+      <li><b>Iterative</b> - an explicit stack removes the ceiling; check <i>visited on pop</i>, since a vertex may be pushed more than once.</li>
+      <li><b>Timestamps</b> - a global clock records d[] and f[] for structural analysis.</li>
+      <li><b>Time</b> - Θ(V + E). <b>Space</b> - O(V).</li>
+    </ul>
+    <div class="tip" style="margin-top:14px;">
+      <b>Placement tip</b>
+      <p>Always mention <span style="font-family:var(--mf)">sys.setrecursionlimit</span> is a
+         band-aid, not a fix — and that the iterative form is what production code ships.
+         It is a cheap signal of engineering maturity.</p>
+    </div>
+  </div>
+  <div class="side">
+    <pre class="sm"><span class="k">def</span> dfs_rec(g, u, seen=<span class="k">None</span>, clock=<span class="k">None</span>, d=<span class="k">None</span>, f=<span class="k">None</span>):
+    <span class="s">"""Recursive DFS with discovery/finish times."""</span>
+    <span class="k">if</span> seen <span class="k">is</span> <span class="k">None</span>:
+        seen, clock, d, f = set(), [0], {}, {}
+    seen.add(u); clock[0] += 1; d[u] = clock[0]
+    <span class="k">for</span> v, _ <span class="k">in</span> g.neighbours(u):
+        <span class="k">if</span> v <span class="k">not in</span> seen:
+            dfs_rec(g, v, seen, clock, d, f)
+    clock[0] += 1; f[u] = clock[0]     <span class="c"># subtree done</span>
+    <span class="k">return</span> d, f
+
+<span class="k">def</span> dfs_iter(g, src):
+    <span class="s">"""Iterative DFS - no recursion ceiling."""</span>
+    seen, stack = set(), [src]
+    order = []
+    <span class="k">while</span> stack:
+        u = stack.pop()                <span class="c"># LIFO -> depth</span>
+        <span class="k">if</span> u <span class="k">in</span> seen:                 <span class="c"># check on POP</span>
+            <span class="k">continue</span>
+        seen.add(u); order.append(u)
+        <span class="k">for</span> v, _ <span class="k">in</span> reversed(g.neighbours(u)):
+            <span class="k">if</span> v <span class="k">not in</span> seen:
+                stack.append(v)
+    <span class="k">return</span> order</pre>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">18</div>
+</section>
+
+<!-- ============ 19 · EDGE CLASSIFICATION ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">DFS classifies every edge — and that classification is the payoff</div>
+  <div class="body">
+    <table>
+      <tr><th>Edge type</th><th>Condition</th><th>Meaning</th></tr>
+      <tr><td>Tree</td><td>v undiscovered</td><td>DFS forest edge</td></tr>
+      <tr><td>Back</td><td>d[v] &lt; d[u] &lt; f[u] &lt; f[v]</td><td>cycle certificate</td></tr>
+      <tr><td>Forward</td><td>d[u] &lt; d[v]</td><td>to a descendant</td></tr>
+      <tr><td>Cross</td><td>f[v] &lt; d[u]</td><td>across subtrees</td></tr>
+    </table>
+    <div class="panel" style="margin-top:16px;">
+      <h4>Consequences in one pass</h4>
+      <p>A <b>back edge exists ⟺ the graph has a cycle</b>. Therefore a single Θ(V+E) DFS
+         simultaneously detects cycles, certifies a DAG, and produces a topological order —
+         no extra work.</p>
+      <p>In undirected graphs only tree and back edges occur; forward and cross edges are a
+         directed-graph phenomenon.</p>
+    </div>
+  </div>
+  <div class="side">
+    <svg width="487" height="235" viewBox="0 0 487 235">
+      <line x1="240" y1="40" x2="150" y2="115" stroke="#7A1E2E" stroke-width="2.6"/>
+      <line x1="240" y1="40" x2="330" y2="115" stroke="#7A1E2E" stroke-width="2.6"/>
+      <line x1="150" y1="115" x2="150" y2="190" stroke="#7A1E2E" stroke-width="2.6"/>
+      <line x1="330" y1="115" x2="330" y2="190" stroke="#7A1E2E" stroke-width="2.6"/>
+      <path d="M150 190 Q 60 120 228 48" fill="none" stroke="#9AA0A6" stroke-width="1.8"
+            stroke-dasharray="5,4" marker-end="url(#ar)"/>
+      <defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#9AA0A6"/></marker></defs>
+      <circle cx="240" cy="40"  r="22" fill="#F5E6E9" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="150" cy="115" r="22" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="330" cy="115" r="22" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="150" cy="190" r="22" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <circle cx="330" cy="190" r="22" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      <text x="240" y="46"  text-anchor="middle" font-size="13" font-weight="bold">a</text>
+      <text x="150" y="121" text-anchor="middle" font-size="13" font-weight="bold">b</text>
+      <text x="330" y="121" text-anchor="middle" font-size="13" font-weight="bold">c</text>
+      <text x="150" y="196" text-anchor="middle" font-size="13" font-weight="bold">d</text>
+      <text x="330" y="196" text-anchor="middle" font-size="13" font-weight="bold">e</text>
+      <text x="72"  y="150" font-size="11" fill="#6E7075" font-style="italic">back edge</text>
+    </svg>
+    <div class="cap">bold = tree edges · dashed = a back edge d → a, proving a cycle</div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">19</div>
+</section>
+
+<!-- ============ 20 · DFS APPLICATIONS + BACKPROP ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">DFS applications — and the bridge to backpropagation</div>
+  <div class="body">
+    <ul>
+      <li><b>Cycle detection</b> - a back edge; O(V+E).</li>
+      <li><b>Topological sort</b> - vertices in decreasing finish time; valid iff the graph is a DAG.</li>
+      <li><b>Strongly connected components</b> - Kosaraju (two passes) or Tarjan (one pass, low-link), both Θ(V+E).</li>
+      <li><b>Bridges &amp; articulation points</b> - low-link values expose single points of failure in a network.</li>
+    </ul>
+    <div class="eq" style="margin-top:12px; text-align:left; font-size:13px;">
+      forward pass&nbsp; = evaluate in topological order<br>
+      backward pass = traverse in <b>reverse</b> topological order
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>Backpropagation is a graph traversal</h4>
+      <p>A neural network is a DAG of primitive operations. Autograd frameworks build that DAG,
+         topologically sort it, evaluate forward, then walk the <i>reverse</i> order applying the
+         chain rule — reverse-mode automatic differentiation.</p>
+      <p>So the topological sort we obtain free from DFS is literally the scheduling backbone of
+         PyTorch and TensorFlow. We formalise this in Part 3.</p>
+    </div>
+    <div class="tip" style="margin-top:14px;">
+      <b>Placement tip</b>
+      <p>"Course schedule", "build order" and "deadlock detection" are all topological sort in
+         disguise. Recognise the DAG and the problem is already solved.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">20</div>
+</section>
+
+<!-- ============ 21 · BFS vs DFS ============ -->
+<section class="slide">
+  <div class="kick">Traversal</div>
+  <div class="title">BFS vs DFS: identical cost, complementary powers</div>
+  <div class="body">
+    <table>
+      <tr><th>Criterion</th><th>BFS</th><th>DFS</th></tr>
+      <tr><td>Frontier</td><td>queue (FIFO)</td><td>stack / recursion</td></tr>
+      <tr><td>Shortest path (unweighted)</td><td>yes</td><td>no</td></tr>
+      <tr><td>Tree analogue</td><td>level-order</td><td>pre-order</td></tr>
+      <tr><td>Reveals</td><td>distance, layers</td><td>cycles, order, SCC</td></tr>
+      <tr><td>Worst-case memory</td><td>O(V) wide frontier</td><td>O(V) deep stack</td></tr>
+      <tr><td>Time</td><td>Θ(V + E)</td><td>Θ(V + E)</td></tr>
+    </table>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>Choosing between them</h4>
+      <p>The choice is about what you must <i>discover</i>, not speed — both are Θ(V+E).</p>
+      <p>Take <b>BFS</b> when hop-distance or layering matters: shortest paths, GNN receptive
+         fields, level-order processing.</p>
+      <p>Take <b>DFS</b> when structure matters: ordering, cycles, connectivity, articulation.</p>
+      <p>Memory can decide too. On a bushy graph BFS's frontier explodes; on a long graph DFS's
+         stack does. The shape of the data picks the traversal.</p>
+    </div>
+    <div class="tip" style="margin-top:14px;">
+      <b>Placement tip</b>
+      <p>Bidirectional BFS meets in the middle and cuts the search from O(b<sup>d</sup>) to
+         O(b<sup>d/2</sup>) — a strong answer for large-graph shortest-path questions.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">21</div>
+</section>
+
+<!-- ============ 22 · DIVIDER 1C ============ -->
+<section class="slide div">
+  <div class="num">3</div>
+  <div class="pt">PART 1 · SECTION C</div>
+  <h2>Minimum Spanning Trees</h2>
+  <p>Connect every vertex at the least total cost — a rare case where a greedy algorithm is
+     provably optimal, resting on one elegant theorem.</p>
+  <div class="rule"></div>
+  <div class="chips">MST problem &nbsp;&nbsp;&nbsp;&nbsp; Cut property &nbsp;&nbsp;&nbsp;&nbsp; Prim &nbsp;&nbsp;&nbsp;&nbsp; Kruskal &amp; union-find</div>
+  <div class="pageno">22</div>
+</section>
+
+<!-- ============ 23 · MST PROBLEM ============ -->
+<section class="slide">
+  <div class="kick">Minimum spanning trees</div>
+  <div class="title">The MST problem, stated precisely</div>
+  <div class="body">
+    <ul>
+      <li><b>Input</b> - a connected, undirected, weighted graph G = (V, E) with w : E → ℝ.</li>
+      <li><b>Output</b> - a spanning tree T ⊆ E of minimum total weight.</li>
+      <li><b>Edge count</b> - every spanning tree has exactly |V| − 1 edges.</li>
+      <li><b>Acyclic</b> - an MST has no cycle: any cycle edge could be deleted, keeping connectivity while lowering cost.</li>
+      <li><b>Not unique</b> - ties in weight admit several MSTs; the <i>weight</i> is unique.</li>
+      <li><b>Cut-optimality</b> - if all weights are distinct, the MST is unique.</li>
+    </ul>
+    <div class="eq" style="margin-top:12px;">
+      <math xmlns="http://www.w3.org/1998/Math/MathML">
+        <mrow><mi>w</mi><mo>(</mo><mi>T</mi><mo>)</mo><mo>=</mo>
+        <munder><mo>∑</mo><mrow><mo>(</mo><mi>u</mi><mo>,</mo><mi>v</mi><mo>)</mo><mo>∈</mo><mi>T</mi></mrow></munder>
+        <mi>w</mi><mo>(</mo><mi>u</mi><mo>,</mo><mi>v</mi><mo>)</mo>
+        <mtext>&nbsp;→ min</mtext></mrow>
+      </math>
+    </div>
+  </div>
+  <div class="side">
+    <svg width="487" height="290" viewBox="0 0 487 290">
+      <g stroke="#C9CDD2" stroke-width="1.6">
+        <line x1="95" y1="145" x2="175" y2="55"/><line x1="175" y1="55" x2="265" y2="55"/>
+        <line x1="265" y1="55" x2="355" y2="55"/><line x1="355" y1="55" x2="430" y2="120"/>
+        <line x1="175" y1="55" x2="175" y2="235"/><line x1="95" y1="145" x2="175" y2="235"/>
+        <line x1="265" y1="55" x2="265" y2="145"/><line x1="265" y1="55" x2="355" y2="235"/>
+        <line x1="355" y1="55" x2="355" y2="235"/><line x1="355" y1="235" x2="430" y2="120"/>
+        <line x1="175" y1="235" x2="265" y2="235"/><line x1="265" y1="235" x2="355" y2="235"/>
+        <line x1="265" y1="145" x2="265" y2="235"/><line x1="175" y1="235" x2="265" y2="145"/>
+      </g>
+      <g stroke="#7A1E2E" stroke-width="3">
+        <line x1="95" y1="145" x2="175" y2="55"/><line x1="265" y1="55" x2="355" y2="55"/>
+        <line x1="355" y1="55" x2="430" y2="120"/><line x1="265" y1="55" x2="265" y2="145"/>
+        <line x1="95" y1="145" x2="175" y2="235"/><line x1="265" y1="235" x2="355" y2="235"/>
+        <line x1="175" y1="235" x2="265" y2="235"/><line x1="265" y1="145" x2="265" y2="235"/>
+      </g>
+      <g font-size="10" fill="#6E7075" font-weight="bold">
+        <text x="128" y="95">4</text><text x="220" y="48">8</text><text x="310" y="48">7</text>
+        <text x="398" y="82">9</text><text x="168" y="150">11</text><text x="126" y="200">8</text>
+        <text x="272" y="105">2</text><text x="316" y="150">14</text><text x="362" y="150">4</text>
+        <text x="400" y="185">10</text><text x="216" y="252">1</text><text x="308" y="252">2</text>
+        <text x="272" y="200">6</text><text x="212" y="196">7</text>
+      </g>
+      <g>
+        <circle cx="95"  cy="145" r="19" fill="#F5E6E9" stroke="#7A1E2E" stroke-width="2"/>
+        <circle cx="175" cy="55"  r="19" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+        <circle cx="265" cy="55"  r="19" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+        <circle cx="355" cy="55"  r="19" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+        <circle cx="430" cy="120" r="19" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+        <circle cx="355" cy="235" r="19" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+        <circle cx="265" cy="235" r="19" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+        <circle cx="175" cy="235" r="19" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+        <circle cx="265" cy="145" r="19" fill="#fff" stroke="#7A1E2E" stroke-width="2"/>
+      </g>
+      <g font-size="12" font-weight="bold" text-anchor="middle">
+        <text x="95" y="150">a</text><text x="175" y="60">b</text><text x="265" y="60">c</text>
+        <text x="355" y="60">d</text><text x="430" y="125">e</text><text x="355" y="240">f</text>
+        <text x="265" y="240">g</text><text x="175" y="240">h</text><text x="265" y="150">i</text>
+      </g>
+    </svg>
+    <div class="cap">bold = an MST of total weight <b>37</b></div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">23</div>
+</section>
+
+<!-- ============ 24 · CUT PROPERTY + PROOF ============ -->
+<section class="slide">
+  <div class="kick">Minimum spanning trees</div>
+  <div class="title">The cut property: the theorem that makes greed provably correct</div>
+  <div class="body">
+    <ul>
+      <li><b>Cut (S, V−S)</b> - a partition of V into two non-empty sets.</li>
+      <li><b>Respects A</b> - no edge of A crosses the cut.</li>
+      <li><b>Light edge</b> - a minimum-weight edge crossing the cut.</li>
+    </ul>
+    <div class="panel" style="margin-top:12px;">
+      <h4>Theorem</h4>
+      <p>Let A be a subset of some MST, let (S, V−S) be a cut respecting A, and let (u,v) be a
+         light edge crossing it. Then A ∪ {(u,v)} is also a subset of some MST — i.e. (u,v) is
+         <b>safe</b> for A.</p>
+    </div>
+    <div class="eq" style="margin-top:12px; font-size:13.5px;">
+      w(T′) = w(T) − w(x,y) + w(u,v) ≤ w(T)
+    </div>
+  </div>
+  <div class="side">
+    <div class="panel">
+      <h4>Proof (exchange argument)</h4>
+      <p>Let T be an MST containing A. If (u,v) ∈ T we are done, so assume not.</p>
+      <p>Adding (u,v) to T creates a unique cycle. That cycle must cross the cut a second time,
+         at some edge (x,y). Since (u,v) is light, w(u,v) ≤ w(x,y).</p>
+      <p>Set T′ = T − {(x,y)} ∪ {(u,v)}. Removing (x,y) splits T into two components which (u,v)
+         reconnects, so T′ is a spanning tree with w(T′) ≤ w(T). As T is minimum, w(T′) = w(T)
+         and T′ is an MST.</p>
+      <p>The cut respects A, so (x,y) ∉ A; hence A ∪ {(u,v)} ⊆ T′. ∎</p>
+    </div>
+    <div class="tip" style="margin-top:12px;">
+      <b>Placement tip</b>
+      <p>Both Prim and Kruskal are corollaries of this one theorem. Saying so — rather than
+         reciting two procedures — is what distinguishes a strong answer.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">24</div>
+</section>
+
+<!-- ============ 25 · PRIM & KRUSKAL ============ -->
+<section class="slide">
+  <div class="kick">Minimum spanning trees</div>
+  <div class="title">Prim and Kruskal: two disciplined ways to invoke the cut property</div>
+  <div class="body">
+    <pre class="sm"><span class="k">import</span> heapq
+<span class="k">def</span> prim(g, root):
+    <span class="s">"""O(E log V). Lazy deletion (heapq has no decrease-key)."""</span>
+    seen, total, mst = {root}, 0, []
+    pq = [(w, root, v) <span class="k">for</span> v, w <span class="k">in</span> g.neighbours(root)]
+    heapq.heapify(pq)
+    <span class="k">while</span> pq <span class="k">and</span> len(seen) &lt; len(g):
+        w, u, v = heapq.heappop(pq)
+        <span class="k">if</span> v <span class="k">in</span> seen: <span class="k">continue</span>          <span class="c"># stale entry</span>
+        seen.add(v); mst.append((u,v,w)); total += w
+        <span class="k">for</span> nx, wt <span class="k">in</span> g.neighbours(v):
+            <span class="k">if</span> nx <span class="k">not in</span> seen: heapq.heappush(pq,(wt,v,nx))
+    <span class="k">return</span> total, mst
+
+<span class="k">class</span> DSU:                              <span class="c"># union by rank + path compression</span>
+    <span class="k">def</span> __init__(s,n): s.p=list(range(n)); s.r=[0]*n
+    <span class="k">def</span> find(s,x):
+        <span class="k">while</span> s.p[x]!=x: s.p[x]=s.p[s.p[x]]; x=s.p[x]
+        <span class="k">return</span> x
+    <span class="k">def</span> union(s,a,b):
+        a,b=s.find(a),s.find(b)
+        <span class="k">if</span> a==b: <span class="k">return</span> <span class="k">False</span>              <span class="c"># would form a cycle</span>
+        <span class="k">if</span> s.r[a]&lt;s.r[b]: a,b=b,a
+        s.p[b]=a; s.r[a]+= s.r[a]==s.r[b]; <span class="k">return</span> <span class="k">True</span>
+
+<span class="k">def</span> kruskal(n, edges):                   <span class="c"># edges: (w,u,v)</span>
+    d,mst,tot = DSU(n),[],0
+    <span class="k">for</span> w,u,v <span class="k">in</span> sorted(edges):            <span class="c"># O(E log E) - dominates</span>
+        <span class="k">if</span> d.union(u,v): mst.append((u,v,w)); tot += w
+    <span class="k">return</span> tot, mst</pre>
+  </div>
+  <div class="side">
+    <table>
+      <tr><th>Criterion</th><th>Prim</th><th>Kruskal</th></tr>
+      <tr><td>Time</td><td>O(E log V)</td><td>O(E log V)</td></tr>
+      <tr><td>Fibonacci heap</td><td>O(E + V log V)</td><td>—</td></tr>
+      <tr><td>Grows</td><td>one tree</td><td>forest merge</td></tr>
+      <tr><td>Best for</td><td>dense</td><td>sparse</td></tr>
+      <tr><td>Structure</td><td>priority queue</td><td>union-find</td></tr>
+    </table>
+    <div class="panel" style="margin-top:14px;">
+      <h4>Same theorem, different cut</h4>
+      <p><b>Prim</b> takes S = the current tree's vertices. <b>Kruskal</b>'s cut is induced by the two
+         components an edge would join. Both always add a light edge across a respecting cut.</p>
+      <p>Union-find with rank + path compression runs in O(E·α(V)); α is the inverse Ackermann
+         function, ≤ 4 for any n in the physical universe.</p>
+    </div>
+    <div class="tip" style="margin-top:12px;">
+      <b>Placement tip</b>
+      <p>Kruskal stopped at k components <i>is</i> single-linkage clustering into k clusters —
+         the cleanest MST↔ML connection an interviewer can ask for.</p>
+    </div>
+  </div>
+  <div class="foot">AI60211 · Algorithmic &amp; Mathematical Foundations for AI</div>
+  <div class="pageno">25</div>
+</section>
+
+</div>
+</body>
+</html>
